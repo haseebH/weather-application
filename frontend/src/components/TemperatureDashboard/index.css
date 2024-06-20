@@ -1,0 +1,65 @@
+/* src/components/TemperatureDashboard.css */
+body, html {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f0f2f5;
+  }
+  
+  .dashboard-container {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 20px;
+    box-sizing: border-box;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  h1 {
+    text-align: center;
+    font-size: 28px;
+    margin-bottom: 20px;
+    color: #333;
+  }
+  
+  .controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  
+  .controls label {
+    margin-right: 10px;
+    font-size: 16px;
+    color: #333;
+  }
+  
+  .controls select {
+    padding: 8px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  
+  .chart-container {
+    position: relative;
+    height: 400px;
+    width: 100%;
+  }
+  
+  @media (max-width: 600px) {
+    .controls {
+      flex-direction: column;
+    }
+  
+    .controls label {
+      margin-bottom: 10px;
+    }
+  
+    .chart-container {
+      height: 300px;
+    }
+  }
+  
