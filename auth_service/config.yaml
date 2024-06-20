@@ -1,0 +1,13 @@
+port: 8080
+database:
+  host: "localhost"
+  port: 27017
+  user: "root"
+  password: "3Ain2909yVMd2eVImO5luukC"
+  db_name: "authentication"
+  min_pool: 1
+  max_pool: 10
+message_queue:
+  rabbitmq_uri: "amqp://rabbitmq:rabbitmq@localhost:5672/"
+  exchange_name: "onboard"
+  routing_key: "test"

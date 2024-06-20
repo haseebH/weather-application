@@ -1,0 +1,112 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${DATABASE_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${DATABASE_PASSWORD}
+    networks:
+      - app-network
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: 'rabbitmq'
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+      RABBITMQ_DEFAULT_VHOST: "/"
+    ports:
+      - "15672:15672"
+    volumes:
+      - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+      - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
+    networks:
+      - app-network
+
+  authentication:
+    build:
+      context: auth_service
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mongo
+      - rabbitmq
+    environment:
+      - ENV=prod
+      - PORT=8080
+      - DATABASE_HOST=mongo
+      - DATABASE_PORT=27017
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_DB=authentication
+      - DATABASE_MIN_POOL=1
+      - DATABASE_MAX_POOL=10
+      - MESSAGE_QUEUE_URI=amqp://${RABBITMQ_USERNAME}:${RABBITMQ_PASSWORD}@rabbitmq:5672/
+      - MESSAGE_QUEUE_EXCHANGE_NAME=onboard
+      - MESSAGE_QUEUE_ROUTING_KEY=test
+    networks:
+      - app-network
+  temperature:
+    build:
+      context: temperature_service
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    depends_on:
+      - mongo
+      - rabbitmq
+    environment:
+      - ENV=prod
+      - PORT=8081
+      - DATABASE_HOST=mongo
+      - DATABASE_PORT=27017
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_DB=weather
+      - DATABASE_MIN_POOL=1
+      - DATABASE_MAX_POOL=10
+      - MESSAGE_QUEUE_URI=amqp://${RABBITMQ_USERNAME}:${RABBITMQ_PASSWORD}@rabbitmq:5672/
+      - MESSAGE_QUEUE_EXCHANGE_NAME=onboard
+      - MESSAGE_QUEUE_ROUTING_KEY=test
+      - MESSAGE_QUEUE=location_data
+      - WEATHER_API=https://api.open-meteo.com/v1/forecast
+    networks:
+      - app-network
+  frontend-server:
+    build:
+      context: frontend/server
+      dockerfile: Dockerfile
+    ports:
+      - "8083:8083"
+    depends_on:
+      - temperature
+      - authentication
+    environment:
+      - ENV=prod
+      - PORT=8083
+      - LOGIN_URL=http://authentication:8080
+      - DATA_URL=http://temperature:8081
+    networks:
+      - app-network
+  frontend:
+    build:
+      context: frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8082:8082"
+    depends_on:
+      - frontend-server
+    environment:
+      - PORT=8082
+      - REACT_APP_API_URL=http://localhost:8083
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
